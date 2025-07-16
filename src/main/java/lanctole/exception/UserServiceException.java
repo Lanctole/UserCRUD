@@ -5,6 +5,10 @@ public class UserServiceException extends RuntimeException {
         super(message);
     }
 
+    public UserServiceException(Long id) {
+        super("User with id " + id + " not found");
+    }
+
     public UserServiceException(String message, Throwable cause) {
         super(message, cause);
     }

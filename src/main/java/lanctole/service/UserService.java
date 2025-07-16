@@ -1,17 +1,18 @@
 package lanctole.service;
 
-import lanctole.model.User;
+import lanctole.dto.CreateOrUpdateUserDto;
+import lanctole.dto.UserDto;
 
 import java.util.List;
 
 public interface UserService {
-    User create(User user);
+    UserDto create(CreateOrUpdateUserDto user);
 
-    User getById(long id);
+    UserDto getById(Long id);
 
-    List<User> getAll();
+    List<UserDto> getAll();
 
-    User update(User user);
+    UserDto update(Long id, CreateOrUpdateUserDto dto);
 
-    void delete(long id);
+    void delete(Long id);
 }

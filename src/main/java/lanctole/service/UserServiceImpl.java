@@ -1,75 +1,70 @@
 package lanctole.service;
 
-import lanctole.dao.UserDao;
+import lanctole.dto.CreateOrUpdateUserDto;
+import lanctole.dto.UserDto;
+import lanctole.exception.EmailAlreadyExistsException;
 import lanctole.exception.UserServiceException;
+import lanctole.mapper.UserMapper;
 import lanctole.model.User;
-import lanctole.validation.UserValidator;
+import lanctole.repository.UserRepository;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
 @Slf4j
+@Service
+@RequiredArgsConstructor
 public class UserServiceImpl implements UserService {
-    private final UserDao userDao;
+    private final UserRepository userRepository;
+    private final UserMapper userMapper;
 
-    public UserServiceImpl(UserDao userDao) {
-        this.userDao = userDao;
+    @Transactional(readOnly = true)
+    public List<UserDto> getAll() {
+        return userRepository.findAll().stream()
+                .map(userMapper::toDto)
+                .toList();
     }
 
-    @Override
-    public User create(User user) {
-        UserValidator.validate(user);
-        try {
-            User created = userDao.create(user);
-            log.debug("Created user with ID {}", created.getId());
-            return created;
-        } catch (Exception e) {
-            log.error("Failed to create user", e);
-            throw new UserServiceException("Unable to create user", e);
-        }
+    @Transactional(readOnly = true)
+    public UserDto getById(Long id) {
+        return userRepository.findById(id)
+                .map(userMapper::toDto)
+                .orElseThrow(() -> new UserServiceException(id));
     }
 
-    @Override
-    public User getById(long id) {
-        try {
-            return userDao.getById(id);
-        } catch (Exception e) {
-            log.error("Failed to retrieve user by ID {}", id, e);
-            throw new UserServiceException("Unable to get user by ID", e);
+    @Transactional
+    public UserDto create(CreateOrUpdateUserDto dto) {
+        if (userRepository.existsByEmail(dto.getEmail())) {
+            throw new EmailAlreadyExistsException(dto.getEmail());
         }
+
+        User user = userMapper.toEntity(dto);
+        User saved = userRepository.save(user);
+        return userMapper.toDto(saved);
     }
 
-    @Override
-    public List<User> getAll() {
-        try {
-            return userDao.getAll();
-        } catch (Exception e) {
-            log.error("Failed to retrieve all users", e);
-            throw new UserServiceException("Unable to get all users", e);
+    @Transactional
+    public UserDto update(Long id, CreateOrUpdateUserDto dto) {
+        User user = userRepository.findById(id)
+                .orElseThrow(() -> new UserServiceException(id));
+
+        if (userRepository.existsByEmail(dto.getEmail()) && !dto.getEmail().equals(user.getEmail())) {
+            throw new EmailAlreadyExistsException(dto.getEmail());
         }
+
+        userMapper.updateEntity(user, dto);
+        User updated = userRepository.save(user);
+        return userMapper.toDto(updated);
     }
 
-    @Override
-    public User update(User user) {
-        UserValidator.validate(user);
-        try {
-            User updated = userDao.update(user);
-            log.debug("Updated user with ID {}", updated.getId());
-            return updated;
-        } catch (Exception e) {
-            log.error("Failed to update user", e);
-            throw new UserServiceException("Unable to update user", e);
+    @Transactional
+    public void delete(Long id) {
+        if (!userRepository.existsById(id)) {
+            throw new UserServiceException(id);
         }
-    }
-
-    @Override
-    public void delete(long id) {
-        try {
-            userDao.delete(id);
-            log.debug("Deleted user with ID {}", id);
-        } catch (Exception e) {
-            log.error("Failed to delete user with ID {}", id, e);
-            throw new UserServiceException("Unable to delete user", e);
-        }
+        userRepository.deleteById(id);
     }
 }

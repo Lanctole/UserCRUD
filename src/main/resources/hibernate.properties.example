@@ -1,7 +1,0 @@
-hibernate.connection.driver_class=org.postgresql.Driver
-hibernate.connection.url=jdbc:postgresql://localhost:5432/crud_db
-hibernate.connection.username=your_username
-hibernate.connection.password=your_password
-hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
-hibernate.hbm2ddl.auto=update
-hibernate.show_sql=true
