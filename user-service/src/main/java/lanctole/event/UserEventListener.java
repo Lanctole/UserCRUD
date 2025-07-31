@@ -14,7 +14,7 @@ public class UserEventListener {
 
     @EventListener
     public void handleUserEvent(UserEvent event) {
-        log.info("Handling Spring event: {}", event);
-        kafkaMessageService.sendUserEvent(event.eventType(), event.email());
+//        log.info("Handling Spring event: {}", event);
+//        kafkaMessageService.sendUserEvent(event.eventType(), event.email());
     }
 }
