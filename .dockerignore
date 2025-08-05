@@ -1,0 +1,44 @@
+# Maven
+target/
+**/target/
+**/pom.xml.*
+**/mvn*
+**/.mvn/
+
+# IDE
+.idea/
+*.iml
+*.iws
+*.ipr
+*.class
+.settings/
+.project
+.classpath
+
+# Git
+.git/
+.gitignore
+
+# Logs
+*.log
+
+# Other
+.DS_Store
+*.swp
+*.swo
+
+# Docker
+docker-compose.override.yml
+.dockerignore
+deploy/Dockerfile
+Dockerfile.*
+
+# Build output
+**/build/
+**/out/
+
+# Local configuration files
+**/application-*.yml
+!**/application-prod.yml
+**/bootstrap-*.yml
+!**/bootstrap-prod.yml

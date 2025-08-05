@@ -36,3 +36,120 @@ services:
     environment:
       GREENMAIL_OPTS: "-Dgreenmail.setup.all=true -Dgreenmail.hostname=0.0.0.0 -Dgreenmail.web.enable=true -Dgreenmail.web.port=9090"
       GREENMAIL_USERS: "test:password"
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: myappdb
+      POSTGRES_USER: user
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U user -d myappdb" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  discovery-service:
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile
+      args:
+          JAR_FILE: discovery-service.jar
+    container_name: discovery-service
+    ports:
+      - "9556:8761"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8761/actuator/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  config-service:
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile
+      args:
+          JAR_FILE: config-service.jar
+    container_name: config-service
+    ports:
+      - "8888:8888"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+    depends_on:
+      - discovery-service
+
+  gateway-service:
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile
+      args:
+          JAR_FILE: gateway-service.jar
+    container_name: gateway-service
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - discovery-service
+      - config-service
+      - kafka
+
+  user-service:
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile
+      args:
+          JAR_FILE: user-service.jar
+    container_name: user-service
+    ports:
+      - "8081:8081"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/myappdb
+      - SPRING_DATASOURCE_USERNAME=user
+      - SPRING_DATASOURCE_PASSWORD=password
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - discovery-service
+      - config-service
+      - postgres
+      - kafka
+
+  notification-service:
+    build:
+      context: ./deploy
+      dockerfile: Dockerfile
+      args:
+          JAR_FILE: notification-service.jar
+    container_name: notification-service
+    ports:
+      - "8082:8082"
+    environment:
+      - SPRING_PROFILES_ACTIVE=prod
+      - SPRING_CLOUD_CONFIG_URI=http://config-service:8888
+      - EUREKA_CLIENT_SERVICEURL_DEFAULTZONE=http://discovery-service:8761/eureka/
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:9092
+    depends_on:
+      - discovery-service
+      - config-service
+      - kafka
+
+volumes:
+  pgdata:
