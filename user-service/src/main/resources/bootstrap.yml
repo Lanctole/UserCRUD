@@ -1,0 +1,14 @@
+spring:
+  application:
+    name: user-service
+
+  config:
+    import: optional:configserver:http://config-service
+
+  profiles:
+    active: default
+
+eureka:
+  client:
+    service-url:
+      defaultZone: http://localhost:9555/eureka

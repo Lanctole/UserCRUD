@@ -13,6 +13,9 @@
         <module>user-service</module>
         <module>notification-service</module>
         <module>common</module>
+        <module>discovery-service</module>
+        <module>config-service</module>
+        <module>gateway-service</module>
     </modules>
 
     <properties>
@@ -30,10 +33,19 @@
                 <type>pom</type>
                 <scope>import</scope>
             </dependency>
+
             <dependency>
                 <groupId>lanctole</groupId>
                 <artifactId>common</artifactId>
                 <version>1.0.0</version>
+            </dependency>
+
+            <dependency>
+                <groupId>org.springframework.cloud</groupId>
+                <artifactId>spring-cloud-dependencies</artifactId>
+                <version>2024.0.0</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
 
